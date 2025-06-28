@@ -9,7 +9,8 @@ import { createPWAConfig } from './plugin/vite-pwa';
 // auto import API
 import AutoImport from 'unplugin-auto-import/vite';
 // auto import UI
-
+import Components from 'unplugin-vue-components/vite';
+import { TDesignResolver } from 'unplugin-vue-components/resolvers';
 // base file router config
 
 // load env variable
@@ -34,7 +35,7 @@ export default defineConfig(({ mode }) => {
       vueDevTools(),
       // PWA config
       createPWAConfig(),
-      // 自动引入Vue、Vue Router相关API
+      // 自动引入Vue、Vue Router相关API；按需引入TDesign UI组件
       AutoImport({
         // targets to transform - 转换的目标
         include: [
@@ -45,6 +46,20 @@ export default defineConfig(({ mode }) => {
         ],
         imports: ['vue', 'vue-router'],
         dts: './auto-imports.d.ts',
+        resolvers: [
+          TDesignResolver({
+            library: 'vue-next',
+          }),
+        ],
+      }),
+      // 自动引入组件
+      Components({
+        resolvers: [
+          // TDesign Resolver Config - https://github.com/unplugin/unplugin-vue-components/blob/main/src/core/resolvers/tdesign.ts#L5
+          TDesignResolver({
+            library: 'vue-next',
+          }),
+        ],
       }),
     ],
     resolve: {
