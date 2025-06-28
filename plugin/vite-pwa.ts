@@ -1,10 +1,10 @@
-import { VitePWA } from 'vite-plugin-pwa'
+import { VitePWA } from 'vite-plugin-pwa';
 
 /**
  * 返回一个 VitePWAOptions 对象
  * @returns {import('vite-plugin-pwa').VitePWAOptions} pwa配置
  */
-// 目前存疑, 产物有更新后, 似乎没有立即生效, 提示更新
+// TODO FIX : 目前存疑, 产物有更新后, 似乎没有立即生效, 提示更新
 export const createPWAConfig = () => {
   return VitePWA({
     injectRegister: 'auto',
@@ -14,6 +14,8 @@ export const createPWAConfig = () => {
     },
     // 提供图片以满足PWA的最低要求
     manifest: {
+      display_override: ['fullscreen', 'minimal-ui'],
+      display: 'standalone',
       icons: [
         {
           src: '/pwa-192x192.png',
@@ -25,7 +27,57 @@ export const createPWAConfig = () => {
           sizes: '512x512',
           type: 'image/png',
         },
+        // 桌面设备和移动设备图标设配处理，添加1张“form_factor”为wide的屏幕截图
       ],
     },
-  })
-}
+    workbox: {
+      runtimeCaching: [
+        // 缓存图片
+        {
+          urlPattern: /\.(?:png|jpg|jpeg|svg)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'images',
+            expiration: {
+              maxEntries: 60,
+              maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        // 缓存字体
+        {
+          urlPattern: /\.(?:eot|otf|ttf|woff|woff2)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'fonts',
+            expiration: {
+              maxEntries: 5,
+              maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        // 缓存其他资源
+        {
+          urlPattern: /\.(?:js|css)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'static-resources',
+            expiration: {
+              maxEntries: 60,
+              maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+      ],
+    },
+  });
+};
