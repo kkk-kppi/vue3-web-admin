@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
   `);
   const env = loadEnvVariable(mode);
   return {
+    base: env.VITE_APP_BASE_URL,
     /* see - https://cn.vitejs.dev/config/shared-options#define */
     define: {
       __APP_ENV__: JSON.stringify(env),
@@ -34,7 +35,7 @@ export default defineConfig(({ mode }) => {
       vueJsx(),
       vueDevTools(),
       // PWA config
-      createPWAConfig(),
+      createPWAConfig(mode),
       // 自动引入Vue、Vue Router相关API；按需引入TDesign UI组件
       AutoImport({
         // targets to transform - 转换的目标
