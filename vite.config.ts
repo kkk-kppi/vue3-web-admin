@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
   `);
   const env = loadEnvVariable(mode);
   return {
-    base: './',
+    base: env.VITE_APP_BASE_URL,
     /* see - https://cn.vitejs.dev/config/shared-options#define */
     define: {
       __APP_ENV__: JSON.stringify(env),
