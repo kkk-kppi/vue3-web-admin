@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
       vueJsx(),
       vueDevTools(),
       // PWA config
-      createPWAConfig(),
+      createPWAConfig(mode),
       // 自动引入Vue、Vue Router相关API
       AutoImport({
         // targets to transform - 转换的目标
