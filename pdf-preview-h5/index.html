@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+        }
+
+        #pdf-wrapper {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="pdf-wrapper">
+        <!-- pdf render this -->
+    </div>
+    <script type="module" src="./pdfjs/pdf.mjs"></script>
+    <script type="module" src="./pdfjs/pdf.worker.mjs"></script>
+    <script>
+        const pdfUrl = '';
+        console.log('pdfUrl -> ', pdfUrl);
+        if (!pdfUrl) alert('无有效的PDF文件地址')
+        // 
+        const canvasWrapper = document.getElementById('pdf-wrapper')
+        // PDF的内容数组
+        const allPdfPageContent = []
+        // 
+        const CSS_UNITS = 96.0 / 72.0;
+        /**
+         * @author: luzijian
+         * @date 2025年2月9日
+         * pdfjs实现pdf预览，基本功能，通过url读取URL后，根据读取结果遍历创建canvas，由canvas渲染成pdf
+         * 同时根据视口的宽度进行预览设配，当pdf的宽度不等于容器的宽度时，通过canvas的scale进行缩放
+         */
+        window.onload = async () => {
+            const pdfLoadTask = pdfjsLib.getDocument(pdfUrl)
+            pdfLoadTask.promise.then(async (pdf) => {
+                console.log('PDF load -> ', pdf);
+
+                // 根据读取到的页码，获取每页的内容
+                const readPdfContentByPageNumber = async (pageNumber) => {
+                    // 读取pdf内容是一个promise操作，读取完就返回，不确保顺序，因此这里await等待每个的promise完成后再调用下一个
+                    const pdfPageContent = await pdf.getPage(pageNumber)
+                    allPdfPageContent.push(pdfPageContent)
+                }
+
+                // 遍历所有pdf内容，并存储起来
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    // 内部读取
+                    await readPdfContentByPageNumber(i)
+                }
+
+                // 提示
+                if (!allPdfPageContent || !allPdfPageContent.length) {
+                    return alert('pdf内容读取失败')
+                }
+
+                renderAllPdf()
+            });
+        }
+
+        async function renderAllPdf() {
+            const canvasWrapperRect = canvasWrapper.getBoundingClientRect()
+            const wrapperWidth = Math.floor(canvasWrapperRect.width)
+
+            for (let index = 0; index < allPdfPageContent.length; index++) {
+                const page = allPdfPageContent[index];
+                const viewport = page.getViewport({ scale: 1 })
+                // 获取PDF的宽高
+                const pdfWidth = Math.ceil(viewport.width)
+                const pdfHeight = Math.ceil(viewport.height)
+
+                // 创建canvas，并设置canvans的id
+                const canvasDocument = document.createElement('canvas')
+                canvasDocument.id = 'pdf-' + page.pageNumber
+                canvasDocument.dataset.pageNumber = page.pageNumber
+
+                // 计算canvas的缩放比例
+                const widthScale = +(wrapperWidth / pdfWidth).toFixed(3)
+
+                // 设置canvas的物理宽高
+                canvasDocument.width = wrapperWidth
+                canvasDocument.height = (pdfHeight * widthScale)
+
+                // 设置canvans的显示尺寸
+                canvasDocument.style.width = wrapperWidth + 'px'
+                canvasDocument.style.height = (pdfHeight * widthScale) + 'px'
+
+                // 设置canvas的缩放比例
+                const canvasContext = canvasDocument.getContext('2d');
+                canvasContext.scale(widthScale, widthScale)
+
+                // 渲染PDF内容
+                await page.render({
+                    canvasContext: canvasContext,
+                    viewport: viewport,
+                }).promise
+
+                // 插入页面容器中
+                canvasWrapper.appendChild(canvasDocument)
+                console.log(`PDF rendered in pageNumber - [${page.pageNumber}]`);
+
+            }
+        }
+
+        // 防抖函数
+        function debounce(fn, delay) {
+            let timer = null
+            return function () {
+                const context = this
+                const args = arguments
+                clearTimeout(timer)
+                timer = setTimeout(() => {
+                    fn.apply(context, args)
+                }, delay)
+            }
+        }
+
+        // onresize事件，当窗口大小改变时，重新渲染pdf，并应用防抖函数防止重复渲染
+        window.onresize = debounce(function () {
+            if (!allPdfPageContent || !allPdfPageContent.length) {
+                return alert('pdf内容读取失败')
+            }
+
+            canvasWrapper.innerHTML = ''
+
+            renderAllPdf()
+        }, 100)
+
+
+    </script>
+</body>
+
+</html>

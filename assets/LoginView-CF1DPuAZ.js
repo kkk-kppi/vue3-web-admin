@@ -1,0 +1,1 @@
+import{_ as o,c as s,a as n,o as t}from"./index-BL4B9GJl.js";const a={},c={class:"login"};function r(i,e){return t(),s("div",c,e[0]||(e[0]=[n("h1",null,"This is an login page",-1)]))}const _=o(a,[["render",r]]);export{_ as default};
